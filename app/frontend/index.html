@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C2PA Cleaner V2 — Provenance Inspector & Image Export Tool</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+  <div class="app-container">
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <path d="m9 12 2 2 4-4"></path>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">C2PA Cleaner</span>
+          <span class="brand-version">v2.0 Provenance Inspector</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="cleaner" id="nav-cleaner">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+            <circle cx="9" cy="9" r="2"></circle>
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+          </svg>
+          <span>Cleaner & Inspector</span>
+        </button>
+
+        <button class="nav-item" data-tab="batch" id="nav-batch">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+          </svg>
+          <span>Batch Process</span>
+          <span class="nav-badge" id="batch-count-badge" style="display: none;">0</span>
+        </button>
+
+        <button class="nav-item" data-tab="activity" id="nav-activity">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>Activity Log</span>
+        </button>
+
+        <button class="nav-item" data-tab="about" id="nav-about">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 16v-4"></path>
+            <path d="M12 8h.01"></path>
+          </svg>
+          <span>About & Truthful Scope</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="local-pill">
+          <span class="pulse-dot"></span>
+          <div class="local-pill-text">
+            <strong>100% Local Processing</strong>
+            <span>Zero automatic cloud uploads</span>
+          </div>
+        </div>
+        <button class="shutdown-btn" id="btn-shutdown" title="Exit application and stop local server">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+            <line x1="12" y1="2" x2="12" y2="12"></line>
+          </svg>
+          <span>Exit App</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Area -->
+    <main class="main-area">
+      <!-- Top Slim Header -->
+      <header class="app-header">
+        <div class="header-titles">
+          <h1 id="page-title">Provenance Inspector & Cleaner</h1>
+          <p id="page-subtitle">Inspect embedded C2PA Content Credentials & content-level watermarks. Losslessly strip C2PA metadata without recompressing pixels.</p>
+        </div>
+        <div class="header-actions">
+          <div class="status-indicator">
+            <span class="status-badge" id="server-status-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              127.0.0.1 Connected
+            </span>
+          </div>
+          <button class="btn-ghost" id="btn-header-reset" style="display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+              <path d="M21 3v5h-5"></path>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+              <path d="M8 16H3v5"></path>
+            </svg>
+            <span>Reset</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content Views Container -->
+      <div class="content-viewport">
+        <!-- 1. Single Image Cleaner View -->
+        <section class="view active" id="view-cleaner">
+          <!-- Dropzone Container -->
+          <div class="upload-card" id="drop-zone">
+            <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style="display: none;">
+            
+            <div class="drop-zone-content" id="drop-zone-idle">
+              <div class="upload-icon-wrapper">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <h3 class="upload-title">Drop an image here</h3>
+              <p class="upload-subtitle">or click the button to select a file from your computer</p>
+              
+              <button class="btn btn-primary btn-select" id="btn-select-file" type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
+                </svg>
+                <span>Select Image</span>
+              </button>
+
+              <div class="upload-hints">
+                <span class="hint-item">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  JPEG, PNG & WebP supported
+                </span>
+                <span class="hint-item">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  Preserves visual pixels byte-for-byte
+                </span>
+                <span class="hint-item">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  Strict local execution
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Workspace Card (Shown when an image is loaded) -->
+          <div class="workspace-card" id="workspace-card" style="display: none;">
+            <div class="workspace-grid">
+              <!-- Left: Image Preview & Details -->
+              <div class="panel preview-panel">
+                <div class="panel-header">
+                  <span class="panel-tag">Source Image</span>
+                  <button class="btn-icon" id="btn-replace-image" title="Choose another image">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M18 6 6 18"></path>
+                      <path d="m6 6 12 12"></path>
+                    </svg>
+                  </button>
+                </div>
+                
+                <div class="image-preview-wrapper">
+                  <img id="image-preview" src="" alt="Selected image preview">
+                </div>
+
+                <div class="file-meta-list">
+                  <div class="meta-row">
+                    <span class="meta-label">Filename</span>
+                    <span class="meta-value" id="meta-filename" title="">—</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label">Format</span>
+                    <span class="meta-value badge-format" id="meta-format">—</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label">File Size</span>
+                    <span class="meta-value" id="meta-filesize">—</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label">Dimensions</span>
+                    <span class="meta-value" id="meta-dimensions">—</span>
+                  </div>
+                </div>
+
+                <!-- Structural vs Metadata Chunk Breakdown -->
+                <div class="structure-breakdown-box" id="structure-breakdown-box" style="margin-top: 14px;">
+                  <div class="meta-row">
+                    <span class="meta-label" style="font-size:11px;">Image Bitstream:</span>
+                    <span class="meta-value text-dim" id="lbl-structural-chunks" style="font-size:11px;">—</span>
+                  </div>
+                  <div class="meta-row" style="margin-top:4px;">
+                    <span class="meta-label" style="font-size:11px;">Retained Metadata:</span>
+                    <span class="meta-value text-dim" id="lbl-retained-meta" style="font-size:11px;">—</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Inspection, Provenance, Watermarking & Actions -->
+              <div class="panel actions-panel">
+                <!-- 1. Embedded C2PA Content Credentials Card -->
+                <div class="panel-header">
+                  <span class="panel-tag">1. Embedded C2PA Content Credentials</span>
+                </div>
+
+                <div class="status-card" id="status-card">
+                  <div class="status-header">
+                    <div class="status-icon" id="status-icon">
+                      <!-- Dynamic icon -->
+                    </div>
+                    <div class="status-info">
+                      <h4 class="status-title" id="status-title">Checking image...</h4>
+                      <p class="status-desc" id="status-desc">Parsing container markers, headers, and JUMBF boxes.</p>
+                    </div>
+                  </div>
+
+                  <!-- Verified Manifest Details (Issuer, Generator, Validation) -->
+                  <div class="verified-manifest-details" id="verified-manifest-details" style="display: none;">
+                    <div class="manifest-grid">
+                      <div class="m-item">
+                        <span class="m-label">Validation State:</span>
+                        <span class="m-val badge-val-state" id="m-val-state">Valid</span>
+                      </div>
+                      <div class="m-item">
+                        <span class="m-label">Signer / Issuer:</span>
+                        <span class="m-val" id="m-issuer">—</span>
+                      </div>
+                      <div class="m-item">
+                        <span class="m-label">Claim Generator:</span>
+                        <span class="m-val" id="m-generator">—</span>
+                      </div>
+                      <div class="m-item">
+                        <span class="m-label">Signing Time:</span>
+                        <span class="m-val" id="m-time">—</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="status-details-box" id="status-details-box" style="display: none;">
+                    <div class="details-stat">
+                      <span class="d-label">Embedded Structures:</span>
+                      <span class="d-val" id="d-manifest-count">0</span>
+                    </div>
+                    <div class="details-stat">
+                      <span class="d-label">Provenance Metadata Size:</span>
+                      <span class="d-val" id="d-manifest-bytes">0 KB</span>
+                    </div>
+                    <div class="details-stat">
+                      <span class="d-label">Pixel Preservation:</span>
+                      <span class="d-val text-success" id="d-pixel-preservation">100% Bitstream-Exact</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. Content-Level Watermark (SynthID) Card -->
+                <div class="panel-header" style="margin-top: 4px;">
+                  <span class="panel-tag">2. Content-Level Watermark</span>
+                </div>
+
+                <div class="watermark-card" id="watermark-card">
+                  <div class="watermark-header">
+                    <div class="watermark-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 12h20M12 2v20M4.93 4.93l14.14 14.14M19.07 4.93 4.93 19.07"/>
+                      </svg>
+                    </div>
+                    <div class="watermark-info">
+                      <div class="watermark-title-row">
+                        <h4 class="watermark-title">Pixel-Level Watermark (e.g. SynthID)</h4>
+                        <span class="badge-synthid not-checked" id="synthid-badge">Not checked</span>
+                      </div>
+                      <p class="watermark-desc">
+                        Content-level watermarks are embedded directly into visual pixel values across frequency/latent spaces.
+                        They are <strong>completely separate</strong> from file container metadata.
+                        Removing C2PA manifests leaves the visual pixels and any invisible watermark untouched.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="watermark-action-row">
+                    <button class="btn btn-secondary btn-sm" id="btn-open-verify-modal" type="button">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                      </svg>
+                      <span>Verify on Authorized Service...</span>
+                    </button>
+                    <span class="watermark-status-hint" id="synthid-hint">Requires authorized neural detector (external).</span>
+                  </div>
+                </div>
+
+                <!-- Action Controls Section -->
+                <div class="action-section">
+                  <button class="btn btn-primary btn-action" id="btn-remove-c2pa" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                      <path d="m9 12 2 2 4-4"></path>
+                    </svg>
+                    <span id="btn-action-text">Remove C2PA</span>
+                  </button>
+
+                  <a class="btn btn-success btn-action" id="btn-download-clean" style="display: none;" download>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Download Clean Image</span>
+                  </a>
+
+                  <button class="btn btn-secondary" id="btn-download-unchanged" style="display: none;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Download Unchanged Copy</span>
+                  </button>
+                </div>
+
+                <!-- Post-Cleaning Verified Result Card -->
+                <div class="results-card" id="results-card" style="display: none;">
+                  <div class="result-header">
+                    <span class="result-badge-success">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      Verified & Ready
+                    </span>
+                    <span class="result-filename" id="res-output-filename">—</span>
+                  </div>
+
+                  <div class="result-stats-grid">
+                    <div class="res-stat-item">
+                      <span class="res-stat-label">Original Size</span>
+                      <span class="res-stat-val" id="res-orig-size">—</span>
+                    </div>
+                    <div class="res-stat-item">
+                      <span class="res-stat-label">Clean Size</span>
+                      <span class="res-stat-val highlight" id="res-clean-size">—</span>
+                    </div>
+                    <div class="res-stat-item">
+                      <span class="res-stat-label">Saved</span>
+                      <span class="res-stat-val delta" id="res-saved-bytes">—</span>
+                    </div>
+                    <div class="res-stat-item">
+                      <span class="res-stat-label">Structures Dropped</span>
+                      <span class="res-stat-val" id="res-structures-removed">—</span>
+                    </div>
+                  </div>
+
+                  <!-- Truthful Boundary Reminder in Results -->
+                  <div class="result-truth-notice">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <span>C2PA metadata manifest removed without recompression. Image pixels remain 100% byte-identical. Content-level watermarks (e.g. SynthID) are untouched.</span>
+                  </div>
+
+                  <!-- Verification Checklist Drawer -->
+                  <div class="verification-drawer">
+                    <div class="drawer-title">
+                      <span>Integrity Verification Suite</span>
+                      <span class="drawer-status-pill">100% Passed</span>
+                    </div>
+                    <div class="checks-list" id="verification-checks-list">
+                      <!-- Rendered by JS -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. Batch Processing View -->
+        <section class="view" id="view-batch">
+          <div class="batch-header-bar">
+            <div>
+              <h3>Batch Image Processing</h3>
+              <p>Process multiple files simultaneously. Each image is inspected, cleaned, and verified independently.</p>
+            </div>
+            <div class="batch-actions">
+              <input type="file" id="batch-file-input" multiple accept=".jpg,.jpeg,.png,.webp" style="display: none;">
+              <button class="btn btn-secondary" id="btn-batch-add">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                <span>Add Images</span>
+              </button>
+              <button class="btn btn-primary" id="btn-batch-process-all" disabled>
+                <span>Clean All</span>
+              </button>
+              <button class="btn btn-success" id="btn-batch-download-zip" style="display: none;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                <span>Download All (.ZIP)</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="batch-table-container">
+            <table class="batch-table">
+              <thead>
+                <tr>
+                  <th>Filename</th>
+                  <th>Format</th>
+                  <th>Size</th>
+                  <th>C2PA Manifest</th>
+                  <th>SynthID Watermark</th>
+                  <th>Cleaned Size</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="batch-table-body">
+                <tr class="empty-row">
+                  <td colspan="8">No images queued for batch processing. Click "Add Images" or drag multiple images here.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 3. Activity Log View -->
+        <section class="view" id="view-activity">
+          <div class="activity-header-bar">
+            <div>
+              <h3>Session Activity & Audit Log</h3>
+              <p>Chronological log of C2PA operations and external watermark verification checks in this session.</p>
+            </div>
+            <button class="btn-ghost" id="btn-clear-activity">Clear Log</button>
+          </div>
+
+          <div class="activity-table-container">
+            <table class="activity-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Filename</th>
+                  <th>Format</th>
+                  <th>C2PA Status</th>
+                  <th>SynthID Status</th>
+                  <th>Bytes Removed</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="activity-table-body">
+                <tr class="empty-row">
+                  <td colspan="7">No activity recorded in this session yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 4. About & Truthful Scope View -->
+        <section class="view" id="view-about">
+          <div class="about-grid">
+            <div class="panel about-panel">
+              <h3>About C2PA Cleaner V2</h3>
+              <p class="about-lead">A local-first image provenance inspector and lossless metadata export tool. Engineered to inspect provenance signals and remove C2PA Content Credentials manifests without re-encoding visual pixels.</p>
+              
+              <div class="privacy-callout">
+                <div class="callout-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div class="callout-text">
+                  <strong>Strict Local Privacy Guarantee</strong>
+                  <p>"Your images are processed locally on this device. They are not uploaded to a cloud service unless you explicitly choose to open an external verification tool."</p>
+                </div>
+              </div>
+
+              <h4>Two Fundamentally Distinct Provenance Technologies</h4>
+              <div class="comparison-grid">
+                <div class="compare-card">
+                  <h5>1. C2PA Content Credentials (Metadata)</h5>
+                  <p>Standardized by C2PA. Stored in container header segments (JPEG APP11 JUMBF, PNG caBX chunk, WebP C2PA chunk). Contains cryptographic claims, assertions, and author signatures. <strong>Can be inspected and removed losslessly on your device without altering visual pixels.</strong></p>
+                </div>
+                <div class="compare-card">
+                  <h5>2. SynthID (Content-Level Watermark)</h5>
+                  <p>Developed by Google DeepMind and adopted by OpenAI / DALL-E. An imperceptible watermark embedded directly into visual pixel values across frequency bands. Survives compression, cropping, and format conversions. <strong>Cannot be detected or removed locally without an authorized detector model.</strong></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel limitations-panel">
+              <h3>Truthful Boundaries & Guarantees</h3>
+              <p class="text-muted">C2PA Cleaner adheres strictly to engineering integrity and clear product limits:</p>
+              
+              <div class="limitation-item">
+                <span class="limit-bullet">✕</span>
+                <div>
+                  <strong>Removing C2PA does NOT remove SynthID:</strong>
+                  <span>Stripping file container metadata leaves the visual pixel bitstream 100% byte-identical. Any imperceptible content-level watermark remains untouched.</span>
+                </div>
+              </div>
+
+              <div class="limitation-item">
+                <span class="limit-bullet">✕</span>
+                <div>
+                  <strong>No fabricated watermark claims:</strong>
+                  <span>If an external authorized detector has not evaluated an image, SynthID status is accurately reported as "Not checked". We never claim an image is watermark-free.</span>
+                </div>
+              </div>
+
+              <div class="limitation-item">
+                <span class="limit-bullet">✕</span>
+                <div>
+                  <strong>No invisible pixel watermark removal:</strong>
+                  <span>We do not perform destructive image transformations or lossy re-encoding to attempt watermark bypass.</span>
+                </div>
+              </div>
+
+              <div class="limitation-item">
+                <span class="limit-bullet">✕</span>
+                <div>
+                  <strong>No remote cloud database erasure:</strong>
+                  <span>Cloud provenance stores or external records held on third-party servers cannot be altered by a local desktop tool.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- External Verification Disclosure Modal -->
+  <div class="modal-backdrop" id="modal-verify" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#a855f7;">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+          <h3>External Watermark Verification</h3>
+        </div>
+        <button class="btn-icon" id="btn-close-modal">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-disclosure-warning">
+          <strong>Notice: External Cloud Transmission Required</strong>
+          <p>
+            You are about to navigate to OpenAI's official Content Provenance verifier at <strong>openai.com/verify</strong>.
+            To verify whether your image contains SynthID or OpenAI provenance signals, you will need to manually upload the image on OpenAI's website.
+          </p>
+          <p style="margin-top:6px; color:#f87171;">
+            This requires transmitting your image to OpenAI's external servers. C2PA Cleaner does not automatically transmit or upload your files.
+          </p>
+        </div>
+
+        <div class="modal-form-row">
+          <label class="modal-label">Log Verification Outcome (Optional):</label>
+          <select id="sel-verify-outcome" class="modal-select">
+            <option value="Not checked">Not checked</option>
+            <option value="Detected by an authorized verifier">Detected by an authorized verifier</option>
+            <option value="Not detected by an authorized verifier">Not detected by an authorized verifier</option>
+            <option value="Verification inconclusive">Verification inconclusive</option>
+            <option value="Verification unavailable">Verification unavailable</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-cancel-modal">Cancel</button>
+        <button class="btn btn-secondary" id="btn-save-verify-outcome">Save Status</button>
+        <a class="btn btn-primary" id="btn-proceed-verify" href="https://openai.com/verify/" target="_blank" rel="noopener noreferrer">
+          Open openai.com/verify ↗
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
